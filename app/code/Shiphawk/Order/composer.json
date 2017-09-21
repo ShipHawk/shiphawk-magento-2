@@ -1,0 +1,19 @@
+{
+    "name": "shiphawk/order",
+    "description": "",
+    "authors": [
+        {
+            "name": "ShipHawk"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Shiphawk\\Order\\": ""
+        },
+        "files": [
+            "registration.php"
+        ]
+    }
+}

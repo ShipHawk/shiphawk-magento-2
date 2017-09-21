@@ -26,6 +26,8 @@ class Carrier extends AbstractCarrier implements CarrierInterface
      */
     protected $_code = 'shiphawk';
 
+    protected $catalogSession;
+
     /**
      * @var ResultFactory
      */
@@ -48,12 +50,15 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         LoggerInterface $logger,
         ResultFactory $rateResultFactory,
         MethodFactory $rateMethodFactory,
+        \Magento\Catalog\Model\Session $catalogSession,
         array $data = []
     ) {
         $this->rateResultFactory = $rateResultFactory;
         $this->rateMethodFactory = $rateMethodFactory;
         $this->logger = $logger;
         $this->scopeConfig = $scopeConfig;
+        $this->catalogSession = $catalogSession;
+
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
     }
     /**
@@ -103,10 +108,14 @@ class Carrier extends AbstractCarrier implements CarrierInterface
 
         $rateResponse = $this->getRates($rateRequest);
 
+
+
         if(property_exists($rateResponse, 'error')) {
             $this->logger->addError(var_export($rateResponse->error, true));
         }else{
             if($rateResponse && isset($rateResponse->rates)) {
+
+                $this->catalogSession->setSHRate($rateResponse->rates);
 
                 foreach($rateResponse->rates as $rateRow)
                 {
@@ -163,7 +172,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         $params = http_build_query(['api_key' => $this->getConfigData('api_key')]);
         $ch_url = $this->getConfigData('gateway_url') . 'rates' . '?' . $params;
 
-        $this->logger->debug(var_export(json_decode($jsonRateRequest), true));
+        //$this->logger->debug(var_export(json_decode($jsonRateRequest), true));
 
         $ch = curl_init();
 
@@ -180,7 +189,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         $resp = curl_exec($ch);
         $arr_res = json_decode($resp);
 
-        $this->logger->debug(var_export($arr_res, true));
+        //$this->logger->debug(var_export($arr_res, true));
 
         curl_close($ch);
         return $arr_res;

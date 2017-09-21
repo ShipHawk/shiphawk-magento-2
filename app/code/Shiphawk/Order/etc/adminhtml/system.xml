@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2016 Magento. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="shiphawk" sortOrder="10" translate="label">
+            <label>ShipHawk</label>
+        </tab>
+        <section id="general" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label">
+            <label>ShipHawk Order Options</label>
+            <tab>shiphawk</tab>
+            <group id="options" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label">
+                <label>ShipHawk Order</label>
+                <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Order Sync</label>
+                    <source_model>Shiphawk\Order\Model\System\Configuration\Source\Ordersync</source_model>
+                </field>
+                <field id="api_key" translate="label" type="obscure" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Api Key</label>
+                </field>
+                <field id="gateway_url" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Gateway Url</label>
+                    <source_model>Shiphawk\Order\Model\System\Configuration\Source\GatewayMode</source_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>
