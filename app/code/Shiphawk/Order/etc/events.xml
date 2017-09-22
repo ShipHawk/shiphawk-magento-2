@@ -3,4 +3,10 @@
     <event name="sales_order_place_after">
         <observer name="shiphawk_sales_order_place_after" instance="Shiphawk\Order\Observer\SendOrder" />
     </event>
+    <event name="sales_order_save_after">
+        <observer name="shiphawk_sales_order_save_after" instance="Shiphawk\Order\Observer\ChangeStatus" />
+    </event>
+    <event name="admin_system_config_changed_section_general">
+        <observer name="custom_admin_system_config_changed_section_general" instance="Shiphawk\Order\Observer\CheckConfiguration"/>
+    </event>
 </config>

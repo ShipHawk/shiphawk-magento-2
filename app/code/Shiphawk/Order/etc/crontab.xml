@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <config>
     <group id="default">
-        <job name="shiphawk_order_procces_14days" instance="Shiphawk\Shipping\Model\Cron" method="execute">
+        <job name="shiphawk_order_procces_14days" instance="Shiphawk\Shipping\Model\ProcessOrderForLast14Days" method="execute">
             <schedule>0 0 * * *</schedule>
         </job>
     </group>
