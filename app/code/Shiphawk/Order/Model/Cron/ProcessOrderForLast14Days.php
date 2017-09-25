@@ -1,7 +1,7 @@
 <?php
 namespace Shiphawk\Order\Model\Cron;
 
-class ProcessOrderForLast14Days extends \Magento\Framework\Model\AbstractModel
+class ProcessOrderForLast14Days
 {
     /**
      * @var \Magento\Sales\Model\ResourceModel\Order\CollectionFactory
@@ -18,13 +18,13 @@ class ProcessOrderForLast14Days extends \Magento\Framework\Model\AbstractModel
         \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Shiphawk\Order\Observer\SendOrder $sendOrder,
+        \Magento\Framework\Registry $registry,
         array $data = []
     ) {
         $this->_orderCollectionFactory = $orderCollectionFactory;
         $this->scopeConfig = $scopeConfig;
         $this->sendOrder = $sendOrder;
 
-        parent::__construct($context);
 
     }
 

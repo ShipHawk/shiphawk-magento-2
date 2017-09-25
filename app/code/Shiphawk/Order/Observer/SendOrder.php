@@ -37,9 +37,11 @@ class SendOrder implements ObserverInterface
 
         $SHRate = $this->catalogSession->getSHRate();
 
-        foreach($SHRate as $rateRow){
-            if(($rateRow->carrier . ' - ' . $rateRow->service_name)  == $order->getShippingDescription()){
-                $shippingRateId = $rateRow->id;
+        if(is_array($SHRate)) {
+            foreach($SHRate as $rateRow){
+                if(($rateRow->carrier . ' - ' . $rateRow->service_name)  == $order->getShippingDescription()){
+                    $shippingRateId = $rateRow->id;
+                }
             }
         }
 
