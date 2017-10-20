@@ -189,6 +189,8 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         $resp = curl_exec($ch);
         $arr_res = json_decode($resp);
 
+        $this->mlog($resp, 'shiphawk_rates_response.log');
+
         //$this->logger->debug(var_export($arr_res, true));
 
         curl_close($ch);
@@ -237,5 +239,13 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         }
 
         return $items;
+    }
+
+    public function mlog($data, $file_mame = 'custom.log') {
+
+        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/'.$file_mame);
+        $logger = new \Zend\Log\Logger();
+        $logger->addWriter($writer);
+        $logger->info(var_export($data, true));
     }
 }
