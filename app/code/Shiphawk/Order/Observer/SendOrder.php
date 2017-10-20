@@ -32,6 +32,13 @@ class SendOrder implements ObserverInterface
 
     public function pushOrder($order) {
 
+        $active = $this->scopeConfig->getValue('general/options/shiphawk_active',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+
+        if (!$active) {
+            return;
+        }
+
         $itemsRequest = [];
         $shippingRateId = '';
 
@@ -120,9 +127,9 @@ class SendOrder implements ObserverInterface
 
     protected function _push($jsonOrderRequest) {
 
-        $api_key = $this->scopeConfig->getValue('carriers/shiphawk/api_key',
+        $api_key = $this->scopeConfig->getValue('general/options/shiphawk_api_key',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        $gateway_url = $this->scopeConfig->getValue('carriers/shiphawk/gateway_url',
+        $gateway_url = $this->scopeConfig->getValue('general/options/shiphawk_gateway_url',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
 
         $params = http_build_query(['api_key' => $api_key]);

@@ -15,14 +15,14 @@
             <tab>shiphawk</tab>
             <group id="options" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label">
                 <label>ShipHawk Order</label>
-                <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="shiphawk_active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Order Sync</label>
                     <source_model>Shiphawk\Order\Model\System\Configuration\Source\Ordersync</source_model>
                 </field>
-                <field id="api_key" translate="label" type="obscure" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="shiphawk_api_key" translate="label" type="obscure" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Api Key</label>
                 </field>
-                <field id="gateway_url" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="shiphawk_gateway_url" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Gateway Url</label>
                     <source_model>Shiphawk\Order\Model\System\Configuration\Source\GatewayMode</source_model>
                 </field>

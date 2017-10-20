@@ -36,7 +36,7 @@ class CheckConfiguration implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $response = $this->_get();
-
+        $this->mlog($response, 'check_conf_response.log');
         if((!$this->scopeConfig->getValue('general/store_information/name',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE)) || (!$this->scopeConfig->getValue('general/store_information/phone',
                 \Magento\Store\Model\ScopeInterface::SCOPE_STORE))) {
@@ -47,7 +47,7 @@ class CheckConfiguration implements ObserverInterface
         if (property_exists($response, 'error')) {
             $this->messageManager->addError('Unable to authenticate ShipHawk API key.');
             $this->resourceConfig->saveConfig(
-                'general/options/active',
+                'general/options/shiphawk_active',
                 '0',
                 \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                 \Magento\Store\Model\Store::DEFAULT_STORE_ID
@@ -55,20 +55,14 @@ class CheckConfiguration implements ObserverInterface
 
         }else{
             $this->messageManager->addSuccess('Your account is successfully linked with ShipHawk.');
-            $this->resourceConfig->saveConfig(
-                'general/options/active',
-                '1',
-                \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-                \Magento\Store\Model\Store::DEFAULT_STORE_ID
-            );
         }
 
     }
 
     protected function _get() {
-        $api_key = $this->scopeConfig->getValue('carriers/shiphawk/api_key',
+        $api_key = $this->scopeConfig->getValue('general/options/shiphawk_api_key',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        $gateway_url = $this->scopeConfig->getValue('carriers/shiphawk/gateway_url',
+        $gateway_url = $this->scopeConfig->getValue('general/options/shiphawk_gateway_url',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
 
         $params = http_build_query(['api_key' => $api_key]);
