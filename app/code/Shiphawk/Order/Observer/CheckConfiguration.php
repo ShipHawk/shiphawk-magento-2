@@ -47,7 +47,7 @@ class CheckConfiguration implements ObserverInterface
         if (property_exists($response, 'error')) {
             $this->messageManager->addError('Unable to authenticate ShipHawk API key.');
             $this->resourceConfig->saveConfig(
-                'general/options/shiphawk_active',
+                'shiphawk_order/options/shiphawk_active',
                 '0',
                 \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                 \Magento\Store\Model\Store::DEFAULT_STORE_ID
@@ -60,9 +60,9 @@ class CheckConfiguration implements ObserverInterface
     }
 
     protected function _get() {
-        $api_key = $this->scopeConfig->getValue('general/options/shiphawk_api_key',
+        $api_key = $this->scopeConfig->getValue('shiphawk_order/options/shiphawk_api_key',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        $gateway_url = $this->scopeConfig->getValue('general/options/shiphawk_gateway_url',
+        $gateway_url = $this->scopeConfig->getValue('shiphawk_order/options/shiphawk_gateway_url',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
 
         $params = http_build_query(['api_key' => $api_key]);

@@ -6,7 +6,7 @@
     <event name="sales_order_save_after">
         <observer name="shiphawk_sales_order_save_after" instance="Shiphawk\Order\Observer\ChangeStatus" />
     </event>
-    <event name="admin_system_config_changed_section_general">
-        <observer name="custom_admin_system_config_changed_section_general" instance="Shiphawk\Order\Observer\CheckConfiguration"/>
+    <event name="admin_system_config_changed_section_shiphawk_order">
+        <observer name="custom_admin_system_config_changed_section_shiphawk_order" instance="Shiphawk\Order\Observer\CheckConfiguration"/>
     </event>
 </config>
