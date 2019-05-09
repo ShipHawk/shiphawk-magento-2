@@ -100,8 +100,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
                 'zip'=> $this->scopeConfig->getValue($origin_zip)
             ),
             'destination_address'=> array(
-                'zip'               =>  $to_zip = $request->getDestPostcode(),
-                'is_residential'    =>  'true'
+                'zip'               =>  $to_zip = $request->getDestPostcode()
             ),
             'apply_rules'=>'true'
         );
@@ -144,7 +143,15 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         /**
          * Displayed as shipping method
          */
-        $methodTitle = $rateRow->service_name;;
+        $methodTitle = $rateRow->service_name;
+
+        // Show estimated delivery dates
+        if ($this->getConfigData('showdates') == 1) {
+            if (!empty($rateRow->est_delivery_date)) {
+                $estDate = date('l, F j Y', strtotime($rateRow->est_delivery_date));
+                $rateResultMethod->setData('carrier_title', $rateRow->carrier . ' - Estimated Delivery: ' . $estDate);
+            }
+        }
 
         $rateResultMethod->setData('method_title', $methodTitle);
         $rateResultMethod->setData('method', $methodTitle);

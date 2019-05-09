@@ -18,6 +18,8 @@
                 <model>Shiphawk\Shipping\Model\Carrier</model>
                 <!--[Error message displays on storefront if carrier's methods unavailable]-->
                 <specificerrmsg>This shipping method is currently unavailable. If you would like to ship using this shipping method, please contact us.</specificerrmsg>
+                <!--[API Key stored as encrypted]-->
+                <api_key backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
             </shiphawk>
         </carriers>
     </default>
