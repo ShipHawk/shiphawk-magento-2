@@ -1,6 +1,8 @@
 {
     "name": "shiphawk/order",
     "description": "",
+    "type": "magento2-module",
+    "version": "2.0.0",
     "authors": [
         {
             "name": "ShipHawk"
