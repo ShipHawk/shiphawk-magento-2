@@ -44,6 +44,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
      * @param MethodFactory $rateMethodFactory
      * @param array $data
      */
+
     public function __construct(
         ScopeConfigInterface $scopeConfig,
         ErrorFactory $rateErrorFactory,
@@ -92,16 +93,22 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         $result = $this->rateResultFactory->create();
 
         $items = $this->getItems($request);
-        $origin_zip = Config::XML_PATH_ORIGIN_POSTCODE;
 
         $rateRequest = array(
             'items' => $items,
             'origin_address'=> array(
+                'state'=> $this->getOrigRegionCode(),
+                'country' => $request->getDestCountryId(),
+                'city' => $request->getDestCity(),
                 'zip'=> $this->scopeConfig->getValue($origin_zip)
             ),
             'destination_address'=> array(
-                'zip'               =>  $to_zip = $request->getDestPostcode(),
-                'is_residential'    =>  'true'
+                'zip' => $request->getDestPostcode(),
+                'country' => $request->getDestCountryId(),
+                'state' => $request->getDestRegionCode(),
+                'city' => $request->getDestCity(),
+                'street1' => $request->getDestStreet(),
+                'is_residential' => 'true'
             ),
             'apply_rules'=>'true'
         );
@@ -168,7 +175,6 @@ class Carrier extends AbstractCarrier implements CarrierInterface
     }
 
     protected function _get($jsonRateRequest) {
-
         $params = http_build_query(['api_key' => $this->getConfigData('api_key')]);
         $ch_url = $this->getConfigData('gateway_url') . 'rates' . '?' . $params;
 
@@ -247,5 +253,17 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         $logger = new \Zend\Log\Logger();
         $logger->addWriter($writer);
         $logger->info(var_export($data, true));
+    }
+
+    // Uncomment for development env
+    // public function getConfigData($key) {
+    //     return $this->scopeConfig->getValue('general/options/shiphawk_'.$key, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+    // }
+
+    public function getOrigRegionCode() {
+	    $origRegionId = $this->scopeConfig->getValue(Config::XML_PATH_ORIGIN_REGION_ID);
+	    $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+	    $region = $objectManager->create('Magento\Directory\Model\RegionFactory')->create();
+	    return $region->load($origRegionId)->getCode();
     }
 }
