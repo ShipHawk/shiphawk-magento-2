@@ -86,13 +86,14 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         /**
          * Make sure that Shipping method is enabled
          */
-        if (!$this->isActive()) {
+        if (!$this->getConfigFlag('active')) {
             return false;
         }
 
         $result = $this->rateResultFactory->create();
 
         $items = $this->getItems($request);
+        $origin_zip = Config::XML_PATH_ORIGIN_POSTCODE;
 
         $rateRequest = array(
             'items' => $items,
@@ -114,8 +115,6 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         );
 
         $rateResponse = $this->getRates($rateRequest);
-
-
 
         if(property_exists($rateResponse, 'error')) {
             $this->logger->addError(var_export($rateResponse->error, true));
@@ -256,9 +255,9 @@ class Carrier extends AbstractCarrier implements CarrierInterface
     }
 
     // Uncomment for development env
-    // public function getConfigData($key) {
-    //     return $this->scopeConfig->getValue('general/options/shiphawk_'.$key, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-    // }
+    public function getConfigData($key) {
+        return $this->scopeConfig->getValue('general/options/shiphawk_'.$key, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+    }
 
     public function getOrigRegionCode() {
 	    $origRegionId = $this->scopeConfig->getValue(Config::XML_PATH_ORIGIN_REGION_ID);
