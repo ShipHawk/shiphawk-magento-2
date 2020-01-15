@@ -99,8 +99,8 @@ class Carrier extends AbstractCarrier implements CarrierInterface
             'items' => $items,
             'origin_address'=> array(
                 'state'=> $this->getOrigRegionCode(),
-                'country' => $request->getDestCountryId(),
-                'city' => $request->getDestCity(),
+                'country' => $this->getOriginCountryCode($request),
+                'city' => $this->getOriginCity($request),
                 'zip'=> $this->scopeConfig->getValue($origin_zip)
             ),
             'destination_address'=> array(
@@ -254,15 +254,34 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         $logger->info(var_export($data, true));
     }
 
-    // Uncomment for development env
-    public function getConfigData($key) {
+    private function getConfigData($key) {
         return $this->scopeConfig->getValue('general/options/shiphawk_'.$key, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
     }
 
-    public function getOrigRegionCode() {
-	    $origRegionId = $this->scopeConfig->getValue(Config::XML_PATH_ORIGIN_REGION_ID);
-	    $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-	    $region = $objectManager->create('Magento\Directory\Model\RegionFactory')->create();
-	    return $region->load($origRegionId)->getCode();
+    private function getOrigRegionCode() {
+            $origRegionId = $this->scopeConfig->getValue(Config::XML_PATH_ORIGIN_REGION_ID);
+            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+            $region = $objectManager->create('Magento\Directory\Model\RegionFactory')->create();
+            return $region->load($origRegionId)->getCode();
+    }
+
+    private function getOriginCountryCode($request) {
+            if ($request->getOrigCountry()) {
+                    $origCountry = $request->getOrigCountry();
+            } else {
+                    $origCountry = $this->_scopeConfig->getValue(\Magento\Sales\Model\Order\Shipment::XML_PATH_STORE_COUNTRY_ID, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $request->getStoreId());
+            }
+
+            return $origCountry;
+    }
+
+    private function getOriginCity($request) {
+            if ($request->getOrigCity()) {
+                    $origCity = $request->getOrigCity();
+            } else {
+                    $origCity = $this->_scopeConfig->getValue(\Magento\Sales\Model\Order\Shipment::XML_PATH_STORE_CITY, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $request->getStoreId());
+            }
+
+            return $origCity;
     }
 }
