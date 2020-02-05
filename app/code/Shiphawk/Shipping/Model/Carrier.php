@@ -254,7 +254,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         $logger->info(var_export($data, true));
     }
 
-    private function getConfigData($key) {
+    public function getConfigData($key) {
         return $this->scopeConfig->getValue('general/options/shiphawk_'.$key, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
     }
 
