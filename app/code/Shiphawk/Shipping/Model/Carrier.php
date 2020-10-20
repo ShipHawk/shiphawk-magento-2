@@ -213,7 +213,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
                 if ($option = $item->getOptionByCode('simple_product')->getProduct()) {
 
                     $item_weight = $item->getWeight();
-                    $items[] = array(
+                    $new_item = array(
                         'product_sku' => $item->getSku(),
                         'quantity' => $item->getQty(),
                         'value' => $option->getPrice(),
@@ -221,15 +221,18 @@ class Carrier extends AbstractCarrier implements CarrierInterface
                         'width' => floatval($option->getResource()->getAttributeRawValue($option->getId(),'shiphawk_width', null)),
                         'height' => floatval($option->getResource()->getAttributeRawValue($option->getId(),'shiphawk_height', null)),
                         'weight' => $item_weight <= 70 ? $item_weight * 16 : $item_weight,
-                        'item_type' => $item_weight <= 70 ? 'parcel' : 'handling_unit',
-                        'handling_unit_type' => $item_weight <= 70 ? '' : 'box'
+                        'item_type' => $item_weight <= 70 ? 'parcel' : 'handling_unit'
                     );
+                    if ($item_weight > 70) {
+                        $new_item['handling_unit_type'] = 'box';
+                    }
+                    $items[] = $new_item;
                 }
 
             } else if ($item->getProductType() != 'configurable' && !$item->getParentItemId()) {
 
                     $item_weight = $item->getWeight();
-                    $items[] = array(
+                    $new_item = array(
                         'product_sku' => $item->getSku(),
                         'quantity' => $item->getQty(),
                         'value' => $item->getPrice(),
@@ -237,9 +240,12 @@ class Carrier extends AbstractCarrier implements CarrierInterface
                         'width' => floatval($item->getProduct()->getResource()->getAttributeRawValue($item->getProduct()->getId(),'shiphawk_width', null)),
                         'height' => floatval($item->getProduct()->getResource()->getAttributeRawValue($item->getProduct()->getId(),'shiphawk_height', null)),
                         'weight' => $item_weight <= 70 ? $item_weight * 16 : $item_weight,
-                        'item_type' => $item_weight <= 70 ? 'parcel' : 'handling_unit',
-                        'handling_unit_type' => $item_weight <= 70 ? '' : 'box'
+                        'item_type' => $item_weight <= 70 ? 'parcel' : 'handling_unit'
                     );
+                    if ($item_weight > 70) {
+                        $new_item['handling_unit_type'] = 'box';
+                    }
+                    $items[] = $new_item;
             }
         }
 
