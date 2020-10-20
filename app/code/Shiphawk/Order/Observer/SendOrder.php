@@ -60,7 +60,7 @@ class SendOrder implements ObserverInterface
                 $simple_sku = $option['simple_sku'];
                     if ($option = $this->_loadProductBySku($simple_sku)) {
                         $item_weight = $item->getWeight();
-                        $itemsRequest[] = array(
+                        $new_item = array(
                             'sku' => $simple_sku,
                             'quantity' => $item->getQtyOrdered(),
                             'value' => $item->getPrice(),
@@ -70,9 +70,12 @@ class SendOrder implements ObserverInterface
                             'weight' => $item_weight <= 70 ? $item_weight * 16 : $item_weight,
                             'can_ship_parcel' => true,
                             'item_type' => $item_weight <= 70 ? 'parcel' : 'handling_unit',
-                            'handling_unit_type' => $item_weight <= 70 ? '' : 'box',
                             'source_system_id' => $item->getId()
                         );
+                        if ($item_weight > 70) {
+                            $new_item['handling_unit_type'] = 'box';
+                        }
+                        $itemsRequest[] = $new_item;
                     }
 
                 }
@@ -80,7 +83,7 @@ class SendOrder implements ObserverInterface
             } else if ($item->getProductType() != 'configurable' && !$item->getParentItemId()) {
 
                 $item_weight = $item->getWeight();
-                $itemsRequest[] = array(
+                $new_item = array(
                     'sku' => $item->getSku(),
                     'quantity' => $item->getQtyOrdered(),
                     'value' => $item->getPrice(),
@@ -90,9 +93,14 @@ class SendOrder implements ObserverInterface
                     'weight' => $item_weight <= 70 ? $item_weight * 16 : $item_weight,
                     'can_ship_parcel' => true,
                     'item_type' => $item_weight <= 70 ? 'parcel' : 'handling_unit',
-                    'handling_unit_type' => $item_weight <= 70 ? '' : 'box',
                     'source_system_id' => $item->getProductId()
                 );
+
+                if ($item_weight > 70) {
+                    $new_item['handling_unit_type'] = 'box';
+                }
+
+                $itemsRequest[] = $new_item;
             }
         }
 
