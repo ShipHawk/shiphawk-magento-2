@@ -20,7 +20,7 @@ class GatewayMode implements OptionSourceInterface
             ['value' => 'https://rc.shiphawk.com/api/v4/', 'label' => __('RC')],
             ['value' => 'https://stage.shiphawk.com/api/v4/', 'label' => __('STAGE')],
             ['value' => 'https://uat.shiphawk.com/api/v4/', 'label' => __('UAT')],
-            // ['value' => 'host.docker.internal:3000/api/v4/', 'label' => __('Localhost')],
+            ['value' => 'host.docker.internal:3000/api/v4/', 'label' => __('Localhost')],
         ];
     }
 }
