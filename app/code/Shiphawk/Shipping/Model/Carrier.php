@@ -116,9 +116,9 @@ class Carrier extends AbstractCarrier implements CarrierInterface
 
         $rateResponse = $this->getRates($rateRequest);
 
-        if(property_exists($rateResponse, 'error')) {
+        if($rateResponse && property_exists($rateResponse, 'error')) {
             $this->logger->addError(var_export($rateResponse->error, true));
-        }else{
+        } else {
             if($rateResponse && isset($rateResponse->rates)) {
 
                 $this->catalogSession->setSHRate($rateResponse->rates);

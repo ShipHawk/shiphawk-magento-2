@@ -13,7 +13,8 @@ class SendOrder implements ObserverInterface
         \Magento\Catalog\Model\Session $catalogSession,
         \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Catalog\Api\ProductRepositoryInterface $productRepository
+        \Magento\Catalog\Api\ProductRepositoryInterface $productRepository,
+        \Magento\Directory\Model\RegionFactory $regionFactory
     )
     {
         $this->_request = $request;
@@ -21,12 +22,12 @@ class SendOrder implements ObserverInterface
         $this->checkoutSession = $checkoutSession;
         $this->scopeConfig = $scopeConfig;
         $this->productRepository = $productRepository;
-
+        $this->regionFactory = $regionFactory;
     }
 
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
-        $order = $observer->getEvent()->getOrder();
+        $order = $observer->getEvent()->getData('order');
         $this->pushOrder($order);
     }
 
@@ -39,7 +40,7 @@ class SendOrder implements ObserverInterface
             return;
         }
 
-        $itemsRequest = [];
+        $orderLineItems = [];
         $shippingRateId = '';
 
         $SHRate = $this->catalogSession->getSHRate();
@@ -53,69 +54,25 @@ class SendOrder implements ObserverInterface
         }
 
         foreach ($order->getAllItems() as $item) {
+          $json = $this->_serializeItem($item);
 
-            if ($item->getProductType() != 'simple') {
-
-                if ($option = $item->getProductOptions()) {
-                $simple_sku = $option['simple_sku'];
-                    if ($option = $this->_loadProductBySku($simple_sku)) {
-                        $item_weight = $item->getWeight();
-                        $new_item = array(
-                            'sku' => $simple_sku,
-                            'quantity' => $item->getQtyOrdered(),
-                            'value' => $item->getPrice(),
-                            'length' => floatval($option->getResource()->getAttributeRawValue($option->getId(),'shiphawk_length', null)),
-                            'width' => floatval($option->getResource()->getAttributeRawValue($option->getId(),'shiphawk_width', null)),
-                            'height' => floatval($option->getResource()->getAttributeRawValue($option->getId(),'shiphawk_height', null)),
-                            'weight' => $item_weight <= 70 ? $item_weight * 16 : $item_weight,
-                            'can_ship_parcel' => true,
-                            'item_type' => $item_weight <= 70 ? 'parcel' : 'handling_unit',
-                            'source_system_id' => $item->getId()
-                        );
-                        if ($item_weight > 70) {
-                            $new_item['handling_unit_type'] = 'box';
-                        }
-                        $itemsRequest[] = $new_item;
-                    }
-
-                }
-
-            } else if ($item->getProductType() != 'configurable' && !$item->getParentItemId()) {
-
-                $item_weight = $item->getWeight();
-                $new_item = array(
-                    'sku' => $item->getSku(),
-                    'quantity' => $item->getQtyOrdered(),
-                    'value' => $item->getPrice(),
-                    'length' => floatval($item->getProduct()->getResource()->getAttributeRawValue($item->getProduct()->getId(),'shiphawk_length', null)),
-                    'width' => floatval($item->getProduct()->getResource()->getAttributeRawValue($item->getProduct()->getId(),'shiphawk_width', null)),
-                    'height' => floatval($item->getProduct()->getResource()->getAttributeRawValue($item->getProduct()->getId(),'shiphawk_height', null)),
-                    'weight' => $item_weight <= 70 ? $item_weight * 16 : $item_weight,
-                    'can_ship_parcel' => true,
-                    'item_type' => $item_weight <= 70 ? 'parcel' : 'handling_unit',
-                    'source_system_id' => $item->getProductId()
-                );
-
-                if ($item_weight > 70) {
-                    $new_item['handling_unit_type'] = 'box';
-                }
-
-                $itemsRequest[] = $new_item;
-            }
+          if (is_array($json)) {
+            $orderLineItems[] = $json;
+          }
         }
 
         $orderRequest = json_encode(
             array(
                 'order_number' => $order->getIncrementId(),
-                'source' => 'magento',
-                'source_system' => 'magento',
-                'source_system_id' => $order->getIncrementId(),
+                'source' => 'magento2',
+                'source_system' => 'magento2',
+                'source_system_id' => $order->getId(),
                 'source_system_processed_at' => date("Y-m-d H:i:s"), //
                 'requested_rate_id' => $shippingRateId,
                 'requested_shipping_details'=> $order->getShippingDescription(),
                 'origin_address' => $this->_getOriginAddress(),
                 'destination_address' => $this->_prepareAddress($order->getShippingAddress()),
-                'order_line_items' => $itemsRequest,
+                'order_line_items' => $orderLineItems,
                 'total_price' => $order->getGrandTotal(),
                 'shipping_price' => $order->getShippingAmount(),
                 'tax_price' => $order->getTaxAmount(),
@@ -133,8 +90,55 @@ class SendOrder implements ObserverInterface
         }
     }
 
-    protected function _push($jsonOrderRequest) {
+    protected function _serializeItem($item) {
+      $item_weight = $item->getWeight();
 
+      $json = array(
+        'quantity' => $item->getQtyOrdered(),
+        'value' => $item->getPrice(),
+        'weight' => $item_weight <= 70 ? $item_weight * 16 : $item_weight,
+        'can_ship_parcel' => true,
+        'item_type' => 'parcel',
+        'source_system_id' => $item->getItemId()
+      );
+
+      if ($item_weight > 70) {
+        $json['handling_unit_type'] = 'box';
+        $json['item_type'] = 'handling_unit';
+      }
+
+      if ($item->getProductType() != 'simple') {
+        if ($option = $item->getProductOptions()) {
+          $simple_sku = $option['simple_sku'];
+
+          if ($product = $this->_loadProductBySku($simple_sku)) {
+              $json['sku'] = $simple_sku;
+              $json['length'] = $this->_getAttributeValue($product, 'shiphawk_length');
+              $json['width'] = $this->_getAttributeValue($product, 'shiphawk_width');
+              $json['height'] = $this->_getAttributeValue($product, 'shiphawk_height');
+
+              return $json;
+          }
+        }
+      } else if ($item->getProductType() != 'configurable' && !$item->getParentItemId()) {
+        $product = $item->getProduct();
+
+        $json['sku'] = $item->getSku();
+        $json['length'] = $this->_getAttributeValue($product, 'shiphawk_length');
+        $json['width'] = $this->_getAttributeValue($product, 'shiphawk_width');
+        $json['height'] = $this->_getAttributeValue($product, 'shiphawk_height');
+
+        return $json;
+      }
+    }
+
+    protected function _getAttributeValue($product, $attribute) {
+      $id = $product->getId();
+
+      return floatval($product->getResource()->getAttributeRawValue($id, $attribute, null));
+    }
+
+    protected function _push($jsonOrderRequest) {
         $api_key = $this->scopeConfig->getValue('general/options/shiphawk_api_key',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
         $gateway_url = $this->scopeConfig->getValue('general/options/shiphawk_gateway_url',
@@ -163,20 +167,20 @@ class SendOrder implements ObserverInterface
     }
 
     public function mlog($data, $file_mame = 'custom.log') {
-
         $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/'.$file_mame);
         $logger = new \Zend\Log\Logger();
         $logger->addWriter($writer);
         $logger->info(var_export($data, true));
     }
 
-    protected function _prepareAddress($address)
-    {
+    protected function _prepareAddress($address) {
+        $streets = $address->getStreet();
+
         return array(
             'name'              => $address->getFirstname() . ' ' . $address->getMiddlename() . ' ' . $address->getLastname(),
             'company'           => $address->getCompany(),
-            'street1'           => $address->getStreet1(),
-            'street2'           => $address->getStreet2(),
+            'street1'           => $streets[0],
+            'street2'           => isset($streets[1]) ? $streets[1] : "",
             'phone_number'      => $address->getTelephone(),
             'city'              => $address->getCity(),
             'state'             => $address->getRegionCode(),
@@ -187,30 +191,32 @@ class SendOrder implements ObserverInterface
         );
     }
 
-    protected function _getOriginAddress()
-    {
-        return array(
-            'name' => $this->scopeConfig->getValue('general/store_information/name',
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
-            'phone_number' => $this->scopeConfig->getValue('general/store_information/phone',
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
-            'street1' => $this->scopeConfig->getValue('general/store_information/street_line1',
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
-            'street2' => $this->scopeConfig->getValue('general/store_information/street_line2',
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
-            'city' => $this->scopeConfig->getValue('general/store_information/city',
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
-            'state' => $this->scopeConfig->getValue('general/store_information/region_id',
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
-            'country' => $this->scopeConfig->getValue('general/store_information/country_id',
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
-            'zip' => $this->scopeConfig->getValue('general/store_information/postcode',
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
-        );
+    protected function _getOriginAddress() {
+      $shipperRegionId = $this->_getStoreInfo('region_id');
+      $state = null;
+
+      if (is_numeric($shipperRegionId)) {
+          $shipperRegion = $this->regionFactory->create()->load($shipperRegionId);
+          $state = $shipperRegion->getCode();
+      }
+
+      return array(
+        'name' => $this->_getStoreInfo('name'),
+        'phone_number' => $this->_getStoreInfo('phone'),
+        'street1' => $this->_getStoreInfo('street_line1'),
+        'street2' => $this->_getStoreInfo('street_line2'),
+        'city' => $this->_getStoreInfo('city'),
+        'state' => $state,
+        'country' => $this->_getStoreInfo('country_id'),
+        'zip' => $this->_getStoreInfo('postcode'),
+      );
     }
 
-    protected function _loadProductBySku($sku)
-    {
+    protected function _getStoreInfo($attribute) {
+      return $this->scopeConfig->getValue("general/store_information/$attribute", \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+    }
+
+    protected function _loadProductBySku($sku) {
         return $this->productRepository->get($sku);
     }
 }
