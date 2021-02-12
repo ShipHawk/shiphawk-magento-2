@@ -96,7 +96,8 @@ class SendOrder implements ObserverInterface
       $json = array(
         'quantity' => $item->getQtyOrdered(),
         'value' => $item->getPrice(),
-        'weight' => $item_weight <= 70 ? $item_weight * 16 : $item_weight,
+        'weight' => $item_weight,
+        'weight_uom' => 'lbs',
         'can_ship_parcel' => true,
         'item_type' => 'parcel',
         'source_system_id' => $item->getItemId()
