@@ -33,7 +33,7 @@ class ChangeStatus implements ObserverInterface
 
         $jsonOrderRequest = json_encode(
             array(
-                'source_system' => 'magento',
+                'source_system' => 'magento2',
                 'source_system_id' => $order->getEntityId(),
                 'source_system_processed_at' => '',
                 'canceled_at' => $order->getUpdatedAt(),

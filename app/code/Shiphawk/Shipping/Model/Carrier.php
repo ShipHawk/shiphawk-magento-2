@@ -116,9 +116,9 @@ class Carrier extends AbstractCarrier implements CarrierInterface
 
         $rateResponse = $this->getRates($rateRequest);
 
-        if(property_exists($rateResponse, 'error')) {
+        if($rateResponse && property_exists($rateResponse, 'error')) {
             $this->logger->addError(var_export($rateResponse->error, true));
-        }else{
+        } else {
             if($rateResponse && isset($rateResponse->rates)) {
 
                 $this->catalogSession->setSHRate($rateResponse->rates);
@@ -220,7 +220,8 @@ class Carrier extends AbstractCarrier implements CarrierInterface
                         'length' => floatval($option->getResource()->getAttributeRawValue($option->getId(),'shiphawk_length', null)),
                         'width' => floatval($option->getResource()->getAttributeRawValue($option->getId(),'shiphawk_width', null)),
                         'height' => floatval($option->getResource()->getAttributeRawValue($option->getId(),'shiphawk_height', null)),
-                        'weight' => $item_weight <= 70 ? $item_weight * 16 : $item_weight,
+                        'weight_uom' => 'lbs',
+                        'weight' => $item_weight,
                         'item_type' => $item_weight <= 70 ? 'parcel' : 'handling_unit'
                     );
                     if ($item_weight > 70) {
@@ -239,7 +240,8 @@ class Carrier extends AbstractCarrier implements CarrierInterface
                         'length' => floatval($item->getProduct()->getResource()->getAttributeRawValue($item->getProduct()->getId(),'shiphawk_length', null)),
                         'width' => floatval($item->getProduct()->getResource()->getAttributeRawValue($item->getProduct()->getId(),'shiphawk_width', null)),
                         'height' => floatval($item->getProduct()->getResource()->getAttributeRawValue($item->getProduct()->getId(),'shiphawk_height', null)),
-                        'weight' => $item_weight <= 70 ? $item_weight * 16 : $item_weight,
+                        'weight' => $item_weight,
+                        'weight_uom' => 'lbs',
                         'item_type' => $item_weight <= 70 ? 'parcel' : 'handling_unit'
                     );
                     if ($item_weight > 70) {
