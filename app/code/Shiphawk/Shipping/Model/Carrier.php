@@ -122,11 +122,21 @@ class Carrier extends AbstractCarrier implements CarrierInterface
             if($rateResponse && isset($rateResponse->rates)) {
 
                 $this->catalogSession->setSHRate($rateResponse->rates);
+                $freeShippingServices = [];
+                $freeShippingConfig = $this->getFreeShippingMethods();
 
-                foreach($rateResponse->rates as $rateRow)
-                {
-                    $method = $this->_buildRate($rateRow);
-                    $result->append($method);
+                if ($freeShippingConfig) {
+                  $freeShippingServices  = explode(",", $freeShippingConfig);
+                }
+
+                foreach($rateResponse->rates as $json) {
+                    $rate = $this->_buildRate($json);
+
+                    if ($freeShippingServices && in_array($rate->getData('method'), $freeShippingServices)) {
+                      $rate->setPrice(0);
+                    }
+
+                    $result->append($rate);
                 }
             }
         }
@@ -136,26 +146,26 @@ class Carrier extends AbstractCarrier implements CarrierInterface
     /**
      * Build Rate
      *
-     * @param array $rateRow
+     * @param array $rate
      * @return Method
      */
-    protected function _buildRate($rateRow)
+    protected function _buildRate($rate)
     {
         $rateResultMethod = $this->rateMethodFactory->create();
         /**
          * Set carrier's method data
          */
         $rateResultMethod->setData('carrier', $this->getCarrierCode());
-        $rateResultMethod->setData('carrier_title', $rateRow->carrier);
+        $rateResultMethod->setData('carrier_title', $rate->carrier);
         /**
          * Displayed as shipping method
          */
-        $methodTitle = $rateRow->service_name;;
+        $methodTitle = $rate->service_name;
 
         $rateResultMethod->setData('method_title', $methodTitle);
         $rateResultMethod->setData('method', $methodTitle);
-        $rateResultMethod->setPrice($rateRow->price);
-        $rateResultMethod->setData('cost', $rateRow->price);
+        $rateResultMethod->setPrice($rate->price);
+        $rateResultMethod->setData('cost', $rate->price);
 
         return $rateResultMethod;
     }
@@ -260,6 +270,10 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         $logger = new \Zend\Log\Logger();
         $logger->addWriter($writer);
         $logger->info(var_export($data, true));
+    }
+
+    public function getFreeShippingMethods() {
+      return $this->scopeConfig->getValue('carriers/shiphawk/free_methoods', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
     }
 
     public function getConfigData($key) {
