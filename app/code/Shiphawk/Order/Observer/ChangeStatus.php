@@ -36,7 +36,7 @@ class ChangeStatus implements ObserverInterface
                 'source_system' => 'magento2',
                 'source_system_id' => $order->getEntityId(),
                 'source_system_processed_at' => '',
-                'canceled_at' => $order->getUpdatedAt(),
+                'cancelled_at' => $order->getUpdatedAt(),
                 'status' => $this->map($order->getStatus()),
             )
         );
@@ -97,8 +97,12 @@ class ChangeStatus implements ObserverInterface
                 return 'shipped';
             case 'processing':
                 return 'partially_shipped';
-            default:
+            case 'holded':
+                return 'on_hold';
+            case 'pending':
                 return 'new';
+            default:
+                return $status;
         }
     }
 
