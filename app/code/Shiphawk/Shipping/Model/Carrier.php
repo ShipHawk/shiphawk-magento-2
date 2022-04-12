@@ -17,6 +17,8 @@ use Magento\Quote\Model\Quote\Address\RateResult\MethodFactory;
 use Magento\Quote\Model\Quote\Address\RateRequest;
 use Psr\Log\LoggerInterface;
 
+require_once __DIR__ . '/../../ShGatewayBuilder.php';
+
 class Carrier extends AbstractCarrier implements CarrierInterface
 {
     /**
@@ -174,14 +176,12 @@ class Carrier extends AbstractCarrier implements CarrierInterface
     }
 
     protected function _get($jsonRateRequest) {
-        $params = http_build_query(['api_key' => $this->getConfigData('api_key')]);
-        $ch_url = $this->getConfigData('gateway_url') . 'rates' . '?' . $params;
-
-        //$this->logger->debug(var_export(json_decode($jsonRateRequest), true));
+        $gatewayUrl = $this->getConfigData('gateway_url');
+        $apiKey = $this->getConfigData('api_key');
 
         $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL, $ch_url);
+        $chUrl = \Shiphawk\ShGatewayBuilder::buildRatesUrl($gatewayUrl, $apiKey);
+        curl_setopt($ch, CURLOPT_URL, $chUrl);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonRateRequest);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
