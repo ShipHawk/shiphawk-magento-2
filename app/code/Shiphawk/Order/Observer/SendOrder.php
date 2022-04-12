@@ -5,6 +5,7 @@ namespace Shiphawk\Order\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\App\RequestInterface;
 
+require_once __DIR__ . '/../../ShGatewayBuilder.php';
 
 class SendOrder implements ObserverInterface
 {
@@ -140,17 +141,14 @@ class SendOrder implements ObserverInterface
     }
 
     protected function _push($jsonOrderRequest) {
-        $api_key = $this->scopeConfig->getValue('general/options/shiphawk_api_key',
+        $apiKey = $this->scopeConfig->getValue('general/options/shiphawk_api_key',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        $gateway_url = $this->scopeConfig->getValue('general/options/shiphawk_gateway_url',
+        $gatewayUrl = $this->scopeConfig->getValue('general/options/shiphawk_gateway_url',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-
-        $params = http_build_query(['api_key' => $api_key]);
-        $ch_url = $gateway_url . 'orders' . '?' . $params;
 
         $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL, $ch_url);
+        $chUrl = \Shiphawk\ShGatewayBuilder::buildOrdersUrl($gatewayUrl, $apiKey);
+        curl_setopt($ch, CURLOPT_URL, $chUrl);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonOrderRequest);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

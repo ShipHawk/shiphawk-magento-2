@@ -6,6 +6,7 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\App\RequestInterface;
 use Psr\Log\LoggerInterface;
 
+require_once __DIR__ . '/../../ShGatewayBuilder.php';
 
 class CheckConfiguration implements ObserverInterface
 {
@@ -44,7 +45,7 @@ class CheckConfiguration implements ObserverInterface
             $this->messageManager->addWarning('Missing information required for printing labels: Please add a store name and phone number under Configuration > General > Store Information');
         }
 
-        if (property_exists($response, 'error')) {
+        if (is_null($response) || property_exists($response, 'error')) {
             $this->messageManager->addError('Unable to authenticate ShipHawk API key.');
             $this->resourceConfig->saveConfig(
                 'general/options/shiphawk_active',
@@ -60,17 +61,16 @@ class CheckConfiguration implements ObserverInterface
     }
 
     protected function _get() {
-        $api_key = $this->scopeConfig->getValue('general/options/shiphawk_api_key',
+        $apiKey = $this->scopeConfig->getValue('general/options/shiphawk_api_key',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        $gateway_url = $this->scopeConfig->getValue('general/options/shiphawk_gateway_url',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-
-        $params = http_build_query(['api_key' => $api_key]);
-        $ch_url = $gateway_url . 'user' . '?' . $params;
+        $gatewayUrl = $this->scopeConfig->getValue(
+            'general/options/shiphawk_gateway_url',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
 
         $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL, $ch_url);
+        $chUrl = \Shiphawk\ShGatewayBuilder::buildUserUrl($gatewayUrl, $apiKey);
+        curl_setopt($ch, CURLOPT_URL, $chUrl);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 

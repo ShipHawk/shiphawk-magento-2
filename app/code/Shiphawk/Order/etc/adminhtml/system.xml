@@ -19,12 +19,12 @@
                     <label>Order Sync</label>
                     <source_model>Shiphawk\Order\Model\System\Configuration\Source\Ordersync</source_model>
                 </field>
-                <field id="shiphawk_api_key" translate="label" type="obscure" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="shiphawk_api_key" translate="label" type="password" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Api Key</label>
                 </field>
-                <field id="shiphawk_gateway_url" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Gateway Url</label>
-                    <source_model>Shiphawk\Order\Model\System\Configuration\Source\GatewayMode</source_model>
+                <field id="shiphawk_gateway_url" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Gateway Host</label>
+                    <tooltip>Please specify just ShipHawk host here, e.g., https://shiphawk.com</tooltip>
                 </field>
             </group>
         </section>

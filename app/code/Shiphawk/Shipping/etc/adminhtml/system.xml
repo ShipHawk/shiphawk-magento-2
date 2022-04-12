@@ -22,11 +22,10 @@
                 <field id="api_key" translate="label" type="obscure" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Api Key</label>
                 </field>
-
                 <!-- We alreaady have a gataway url in shiphawk&#45;magento&#45;2/app/code/Shiphawk/Order/etc/adminhtml/system.xml -->
-                <field id="gateway_url" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Gateway Url</label>
-                    <source_model>Shiphawk\Shipping\Model\System\Configuration\Source\GatewayMode</source_model>
+                <field id="gateway_url" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Gateway Host</label>
+                    <tooltip>Please specify just ShipHawk host here, e.g., https://shiphawk.com</tooltip>
                 </field>
                 <field id="free_methoods" translate="label" type="multiselect" sortOrder="99" showInDefault="1" showInWebsite="1" showInStore="0">
                     <can_be_empty>1</can_be_empty>
