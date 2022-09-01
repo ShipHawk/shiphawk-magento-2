@@ -30,7 +30,7 @@ class ProcessOrderForLast14Days
 
     public function execute()
     {
-        $active = $this->scopeConfig->getValue('general/options/shiphawk_active',
+        $active = $this->scopeConfig->getValue('shiphawk_order/options/shiphawk_active',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
 
         if (!$active) {

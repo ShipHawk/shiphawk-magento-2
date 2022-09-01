@@ -10,9 +10,10 @@
         <tab id="shiphawk" sortOrder="10" translate="label">
             <label>ShipHawk</label>
         </tab>
-        <section id="general" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label">
+        <section id="shiphawk_order" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label">
             <label>ShipHawk Order Options</label>
             <tab>shiphawk</tab>
+            <resource>Shiphawk_Order::config</resource>
             <group id="options" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label">
                 <label>ShipHawk Order</label>
                 <field id="shiphawk_active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
