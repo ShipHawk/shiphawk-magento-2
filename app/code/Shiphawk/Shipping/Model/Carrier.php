@@ -113,7 +113,8 @@ class Carrier extends AbstractCarrier implements CarrierInterface
                 'street1' => $request->getDestStreet(),
                 'is_residential' => 'true'
             ),
-            'apply_rules'=>'true'
+            'apply_rules'=>'true',
+            'rate_source'=>'magento2'
         );
 
         $rateResponse = $this->getRates($rateRequest);
