@@ -120,7 +120,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         $rateResponse = $this->getRates($rateRequest);
 
         if($rateResponse && property_exists($rateResponse, 'error')) {
-            $this->logger->addError(var_export($rateResponse->error, true));
+            $this->logger->error(var_export($rateResponse->error, true));
         } else {
             if($rateResponse && isset($rateResponse->rates)) {
 
@@ -267,8 +267,8 @@ class Carrier extends AbstractCarrier implements CarrierInterface
 
     public function mlog($data, $file_mame = 'custom.log') {
 
-        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/'.$file_mame);
-        $logger = new \Zend\Log\Logger();
+        $writer = new \Zend_Log_Writer_Stream(BP . '/var/log/'.$file_mame);
+        $logger = new \Zend_Log();
         $logger->addWriter($writer);
         $logger->info(var_export($data, true));
     }

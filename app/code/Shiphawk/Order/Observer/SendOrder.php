@@ -166,8 +166,8 @@ class SendOrder implements ObserverInterface
     }
 
     public function mlog($data, $file_mame = 'custom.log') {
-        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/'.$file_mame);
-        $logger = new \Zend\Log\Logger();
+        $writer = new \Zend_Log_Writer_Stream(BP . '/var/log/'.$file_mame);
+        $logger = new \Zend_Log();
         $logger->addWriter($writer);
         $logger->info(var_export($data, true));
     }
