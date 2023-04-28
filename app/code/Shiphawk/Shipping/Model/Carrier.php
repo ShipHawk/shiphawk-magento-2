@@ -137,7 +137,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
                 foreach($rateResponse->rates as $json) {
                     $rate = $this->_buildRate($json);
 
-                    if ($freeShippingServices && in_array($rate->getData('method'), $freeShippingServices)) {
+                    if ($freeShippingServices && in_array($rate->getData('method_title'), $freeShippingServices)) {
                       $rate->setPrice(0);
                     }
 
@@ -168,7 +168,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         $methodTitle = $rate->service_name;
 
         $rateResultMethod->setData('method_title', $methodTitle);
-        $rateResultMethod->setData('method', $methodTitle);
+        $rateResultMethod->setData('method', $methodTitle . '_' . $rate->carrier);
         $rateResultMethod->setPrice($rate->price);
         $rateResultMethod->setData('cost', $rate->price);
 
