@@ -28,7 +28,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
      * @var string
      */
     protected $_code = 'shiphawk';
-
+    protected $logger;
     protected $catalogSession;
 
     /**
