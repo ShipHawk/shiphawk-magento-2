@@ -9,6 +9,13 @@ require_once __DIR__ . '/../../ShGatewayBuilder.php';
 
 class SendOrder implements ObserverInterface
 {
+    protected $_request;
+    protected $catalogSession;
+    protected $checkoutSession;
+    protected $scopeConfig;
+    protected $productRepository;
+    protected $regionFactory;
+
     public function __construct(
         \Magento\Framework\App\RequestInterface $request,
         \Magento\Catalog\Model\Session $catalogSession,
