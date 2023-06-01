@@ -5,6 +5,7 @@
  */
 namespace Shiphawk\Shipping\Model;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\DataObject;
 use Magento\Shipping\Model\Carrier\AbstractCarrier;
 use Magento\Shipping\Model\Carrier\CarrierInterface;
@@ -28,7 +29,9 @@ class Carrier extends AbstractCarrier implements CarrierInterface
      */
     protected $_code = 'shiphawk';
     protected $logger;
+    protected $scopeConfig;
     protected $catalogSession;
+    protected $objectManager;
 
     /**
      * @var ResultFactory
@@ -61,6 +64,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         $this->logger = $logger;
         $this->scopeConfig = $scopeConfig;
         $this->catalogSession = $catalogSession;
+        $this->objectManager = ObjectManager::getInstance();
 
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
     }
@@ -221,16 +225,16 @@ class Carrier extends AbstractCarrier implements CarrierInterface
 
             if ($item->getProductType() != 'simple') {
 
-                if ($option = $item->getOptionByCode('simple_product')->getProduct()) {
-
+                $product = $this->objectManager->create('Magento\Catalog\Model\Product')->load($item->getProductId());
+                if ($product->getId()) {
                     $item_weight = $item->getWeight();
                     $new_item = array(
                         'product_sku' => $item->getSku(),
                         'quantity' => $item->getQty(),
-                        'value' => $option->getPrice(),
-                        'length' => floatval($option->getResource()->getAttributeRawValue($option->getId(),'shiphawk_length', null)),
-                        'width' => floatval($option->getResource()->getAttributeRawValue($option->getId(),'shiphawk_width', null)),
-                        'height' => floatval($option->getResource()->getAttributeRawValue($option->getId(),'shiphawk_height', null)),
+                        'value' => $product->getPrice(),
+                        'length' => floatval($product->getResource()->getAttributeRawValue($product->getId(),'shiphawk_length', null)),
+                        'width' => floatval($product->getResource()->getAttributeRawValue($product->getId(),'shiphawk_width', null)),
+                        'height' => floatval($product->getResource()->getAttributeRawValue($product->getId(),'shiphawk_height', null)),
                         'weight_uom' => 'lbs',
                         'weight' => $item_weight,
                         'item_type' => $item_weight <= 70 ? 'parcel' : 'handling_unit'
@@ -283,8 +287,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
 
     private function getOrigRegionCode() {
             $origRegionId = $this->scopeConfig->getValue(Config::XML_PATH_ORIGIN_REGION_ID);
-            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-            $region = $objectManager->create('Magento\Directory\Model\RegionFactory')->create();
+            $region = $this->objectManager->create('Magento\Directory\Model\RegionFactory')->create();
             return $region->load($origRegionId)->getCode();
     }
 
