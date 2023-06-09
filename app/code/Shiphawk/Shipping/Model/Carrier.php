@@ -28,7 +28,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
      * @var string
      */
     protected $_code = 'shiphawk';
-
+    protected $logger;
     protected $catalogSession;
 
     /**
@@ -91,6 +91,11 @@ class Carrier extends AbstractCarrier implements CarrierInterface
          * Make sure that Shipping method is enabled
          */
         if (!$this->getConfigFlag('active')) {
+            return false;
+        }
+
+        $destinationZip = $request->getDestPostcode();
+        if (!$destinationZip) {
             return false;
         }
 
