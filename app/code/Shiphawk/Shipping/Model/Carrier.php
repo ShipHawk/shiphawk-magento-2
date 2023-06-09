@@ -96,6 +96,11 @@ class Carrier extends AbstractCarrier implements CarrierInterface
             return false;
         }
 
+        $destinationZip = $request->getDestPostcode();
+        if (!$destinationZip) {
+            return false;
+        }
+
         $result = $this->rateResultFactory->create();
 
         $items = $this->getItems($request);
