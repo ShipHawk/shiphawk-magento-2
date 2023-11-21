@@ -1,23 +1,19 @@
 <?xml version="1.0"?>
-<!--
-/**
- * Copyright © 2016 Magento. All rights reserved.
- * See COPYING.txt for license details.
- */
--->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
     <default>
         <carriers>
-            <!--[Carrier's system identifier]-->
             <shiphawk>
-                <!--[Carrier's activate/deactivate flag default value]-->
-                <active>1</active>
-                <!--[Carrier's title default value]-->
+                <active>0</active>
                 <title>Shiphawk Shipping</title>
-                <!--[Carrier's model class]-->
-                <model>Shiphawk\Shipping\Model\Carrier</model>
-                <!--[Error message displays on storefront if carrier's methods unavailable]-->
+                <model>Shiphawk\Shipping\Model\Carrier\Shiphawk</model>
+                <handling_type>F</handling_type>
+                <handling_fee>0</handling_fee>
+                <sort_order>1</sort_order>
+                <sallowspecific>0</sallowspecific>
+                <showmethod>0</showmethod>
                 <specificerrmsg>This shipping method is currently unavailable. If you would like to ship using this shipping method, please contact us.</specificerrmsg>
+                <debug>0</debug>
+                <api_key backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
             </shiphawk>
         </carriers>
     </default>
