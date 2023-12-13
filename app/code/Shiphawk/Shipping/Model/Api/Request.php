@@ -38,6 +38,7 @@ class Request
             "origin_address" => $this->getOriginAddress($rateRequest),
             "destination_address" => $this->getDestinationAddress($rateRequest),
             "apply_rules" => "true",
+            "rate_source" => "magento2"
         ];
         return $this->json->serialize($body);
     }
