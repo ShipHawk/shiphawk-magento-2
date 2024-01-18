@@ -77,14 +77,22 @@ class Request
     private function getItems(RateRequest $rateRequest) : array
     {
         $items = [];
+        $parentPrices = [];
         foreach ($rateRequest->getAllItems() as $item) {
             if ($item->getProduct()->getTypeId() !== \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
+                $parentPrices[$item->getItemId()] = $item->getPrice();
                 continue;
             }
+            $price = $item->getParentItemId() ?
+                (array_key_exists($item->getParentItemId(), $parentPrices) ?
+                    $parentPrices[$item->getParentItemId()] :
+                    $item->getPrice()
+                ) :
+                $item->getPrice();
             $itemArray = [
                 'product_sku' => $item->getSku(),
                 'quantity' => $item->getQty(),
-                'value' => $item->getPrice(),
+                'value' => $price,
                 'length' => $this->getDimensionItemValue($item, 'shiphawk_length'),
                 'width' => $this->getDimensionItemValue($item, 'shiphawk_width'),
                 'height' => $this->getDimensionItemValue($item, 'shiphawk_height'),

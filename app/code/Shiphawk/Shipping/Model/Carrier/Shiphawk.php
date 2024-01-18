@@ -50,6 +50,11 @@ class Shiphawk extends \Magento\Shipping\Model\Carrier\AbstractCarrier implement
             return false;
         }
 
+        // Zip code is required, no need doing any request
+        if (empty($request->getDestPostcode())) {
+            return false;
+        }
+
         /** @var \Magento\Shipping\Model\Rate\Result $result */
         $result = $this->rateResultFactory->create();
 
