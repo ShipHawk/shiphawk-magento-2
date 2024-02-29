@@ -5,6 +5,7 @@
  */
 namespace Shiphawk\Shipping\Model;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\DataObject;
 use Magento\Shipping\Model\Carrier\AbstractCarrier;
 use Magento\Shipping\Model\Carrier\CarrierInterface;
@@ -17,6 +18,8 @@ use Magento\Quote\Model\Quote\Address\RateResult\MethodFactory;
 use Magento\Quote\Model\Quote\Address\RateRequest;
 use Psr\Log\LoggerInterface;
 
+require_once __DIR__ . '/../../ShGatewayBuilder.php';
+
 class Carrier extends AbstractCarrier implements CarrierInterface
 {
     /**
@@ -25,8 +28,10 @@ class Carrier extends AbstractCarrier implements CarrierInterface
      * @var string
      */
     protected $_code = 'shiphawk';
-
+    protected $logger;
+    protected $scopeConfig;
     protected $catalogSession;
+    protected $objectManager;
 
     /**
      * @var ResultFactory
@@ -59,6 +64,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         $this->logger = $logger;
         $this->scopeConfig = $scopeConfig;
         $this->catalogSession = $catalogSession;
+        $this->objectManager = ObjectManager::getInstance();
 
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
     }
@@ -90,6 +96,11 @@ class Carrier extends AbstractCarrier implements CarrierInterface
             return false;
         }
 
+        $destinationZip = $request->getDestPostcode();
+        if (!$destinationZip) {
+            return false;
+        }
+
         $result = $this->rateResultFactory->create();
 
         $items = $this->getItems($request);
@@ -111,22 +122,33 @@ class Carrier extends AbstractCarrier implements CarrierInterface
                 'street1' => $request->getDestStreet(),
                 'is_residential' => 'true'
             ),
-            'apply_rules'=>'true'
+            'apply_rules'=>'true',
+            'rate_source'=>'magento2'
         );
 
         $rateResponse = $this->getRates($rateRequest);
 
-        if(property_exists($rateResponse, 'error')) {
-            $this->logger->addError(var_export($rateResponse->error, true));
-        }else{
+        if($rateResponse && property_exists($rateResponse, 'error')) {
+            $this->logger->error(var_export($rateResponse->error, true));
+        } else {
             if($rateResponse && isset($rateResponse->rates)) {
 
                 $this->catalogSession->setSHRate($rateResponse->rates);
+                $freeShippingServices = [];
+                $freeShippingConfig = $this->getFreeShippingMethods();
 
-                foreach($rateResponse->rates as $rateRow)
-                {
-                    $method = $this->_buildRate($rateRow);
-                    $result->append($method);
+                if ($freeShippingConfig) {
+                  $freeShippingServices  = explode(",", $freeShippingConfig);
+                }
+
+                foreach($rateResponse->rates as $json) {
+                    $rate = $this->_buildRate($json);
+
+                    if ($freeShippingServices && in_array($rate->getData('method_title'), $freeShippingServices)) {
+                      $rate->setPrice(0);
+                    }
+
+                    $result->append($rate);
                 }
             }
         }
@@ -136,26 +158,26 @@ class Carrier extends AbstractCarrier implements CarrierInterface
     /**
      * Build Rate
      *
-     * @param array $rateRow
+     * @param array $rate
      * @return Method
      */
-    protected function _buildRate($rateRow)
+    protected function _buildRate($rate)
     {
         $rateResultMethod = $this->rateMethodFactory->create();
         /**
          * Set carrier's method data
          */
         $rateResultMethod->setData('carrier', $this->getCarrierCode());
-        $rateResultMethod->setData('carrier_title', $rateRow->carrier);
+        $rateResultMethod->setData('carrier_title', $rate->carrier);
         /**
          * Displayed as shipping method
          */
-        $methodTitle = $rateRow->service_name;;
+        $methodTitle = $rate->service_name;
 
         $rateResultMethod->setData('method_title', $methodTitle);
-        $rateResultMethod->setData('method', $methodTitle);
-        $rateResultMethod->setPrice($rateRow->price);
-        $rateResultMethod->setData('cost', $rateRow->price);
+        $rateResultMethod->setData('method', $methodTitle . '_' . $rate->carrier);
+        $rateResultMethod->setPrice($rate->price);
+        $rateResultMethod->setData('cost', $rate->price);
 
         return $rateResultMethod;
     }
@@ -174,14 +196,12 @@ class Carrier extends AbstractCarrier implements CarrierInterface
     }
 
     protected function _get($jsonRateRequest) {
-        $params = http_build_query(['api_key' => $this->getConfigData('api_key')]);
-        $ch_url = $this->getConfigData('gateway_url') . 'rates' . '?' . $params;
-
-        //$this->logger->debug(var_export(json_decode($jsonRateRequest), true));
+        $gatewayUrl = $this->getConfigData('gateway_url');
+        $apiKey = $this->getConfigData('api_key');
 
         $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL, $ch_url);
+        $chUrl = \Shiphawk\ShGatewayBuilder::buildRatesUrl($gatewayUrl, $apiKey);
+        curl_setopt($ch, CURLOPT_URL, $chUrl);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonRateRequest);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -210,17 +230,18 @@ class Carrier extends AbstractCarrier implements CarrierInterface
 
             if ($item->getProductType() != 'simple') {
 
-                if ($option = $item->getOptionByCode('simple_product')->getProduct()) {
-
+                $product = $this->objectManager->create('Magento\Catalog\Model\Product')->load($item->getProductId());
+                if ($product->getId()) {
                     $item_weight = $item->getWeight();
                     $new_item = array(
                         'product_sku' => $item->getSku(),
                         'quantity' => $item->getQty(),
-                        'value' => $option->getPrice(),
-                        'length' => floatval($option->getResource()->getAttributeRawValue($option->getId(),'shiphawk_length', null)),
-                        'width' => floatval($option->getResource()->getAttributeRawValue($option->getId(),'shiphawk_width', null)),
-                        'height' => floatval($option->getResource()->getAttributeRawValue($option->getId(),'shiphawk_height', null)),
-                        'weight' => $item_weight <= 70 ? $item_weight * 16 : $item_weight,
+                        'value' => $product->getPrice(),
+                        'length' => floatval($product->getResource()->getAttributeRawValue($product->getId(),'shiphawk_length', null)),
+                        'width' => floatval($product->getResource()->getAttributeRawValue($product->getId(),'shiphawk_width', null)),
+                        'height' => floatval($product->getResource()->getAttributeRawValue($product->getId(),'shiphawk_height', null)),
+                        'weight_uom' => 'lbs',
+                        'weight' => $item_weight,
                         'item_type' => $item_weight <= 70 ? 'parcel' : 'handling_unit'
                     );
                     if ($item_weight > 70) {
@@ -239,7 +260,8 @@ class Carrier extends AbstractCarrier implements CarrierInterface
                         'length' => floatval($item->getProduct()->getResource()->getAttributeRawValue($item->getProduct()->getId(),'shiphawk_length', null)),
                         'width' => floatval($item->getProduct()->getResource()->getAttributeRawValue($item->getProduct()->getId(),'shiphawk_width', null)),
                         'height' => floatval($item->getProduct()->getResource()->getAttributeRawValue($item->getProduct()->getId(),'shiphawk_height', null)),
-                        'weight' => $item_weight <= 70 ? $item_weight * 16 : $item_weight,
+                        'weight' => $item_weight,
+                        'weight_uom' => 'lbs',
                         'item_type' => $item_weight <= 70 ? 'parcel' : 'handling_unit'
                     );
                     if ($item_weight > 70) {
@@ -254,10 +276,14 @@ class Carrier extends AbstractCarrier implements CarrierInterface
 
     public function mlog($data, $file_mame = 'custom.log') {
 
-        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/'.$file_mame);
-        $logger = new \Zend\Log\Logger();
+        $writer = new \Zend_Log_Writer_Stream(BP . '/var/log/'.$file_mame);
+        $logger = new \Zend_Log();
         $logger->addWriter($writer);
         $logger->info(var_export($data, true));
+    }
+
+    public function getFreeShippingMethods() {
+      return $this->scopeConfig->getValue('carriers/shiphawk/free_methoods', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
     }
 
     public function getConfigData($key) {
@@ -266,8 +292,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
 
     private function getOrigRegionCode() {
             $origRegionId = $this->scopeConfig->getValue(Config::XML_PATH_ORIGIN_REGION_ID);
-            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-            $region = $objectManager->create('Magento\Directory\Model\RegionFactory')->create();
+            $region = $this->objectManager->create('Magento\Directory\Model\RegionFactory')->create();
             return $region->load($origRegionId)->getCode();
     }
 

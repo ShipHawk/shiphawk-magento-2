@@ -6,9 +6,17 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\App\RequestInterface;
 use Psr\Log\LoggerInterface;
 
+require_once __DIR__ . '/../../ShGatewayBuilder.php';
 
 class ChangeStatus implements ObserverInterface
 {
+    protected $_request;
+    protected $catalogSession;
+    protected $checkoutSession;
+    protected $scopeConfig;
+    protected $productRepository;
+    protected $logger;
+
     public function __construct(
         \Magento\Framework\App\RequestInterface $request,
         \Magento\Catalog\Model\Session $catalogSession,
@@ -33,7 +41,7 @@ class ChangeStatus implements ObserverInterface
 
         $jsonOrderRequest = json_encode(
             array(
-                'source_system' => 'magento',
+                'source_system' => 'magento2',
                 'source_system_id' => $order->getEntityId(),
                 'source_system_processed_at' => '',
                 'cancelled_at' => $order->getUpdatedAt(),
@@ -52,18 +60,14 @@ class ChangeStatus implements ObserverInterface
     }
 
     protected function _push($jsonOrderRequest, $order) {
-
-        $api_key = $this->scopeConfig->getValue('general/options/shiphawk_api_key',
+        $apiKey = $this->scopeConfig->getValue('general/options/shiphawk_api_key',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        $gateway_url = $this->scopeConfig->getValue('general/options/shiphawk_gateway_url',
+        $gatewayUrl = $this->scopeConfig->getValue('general/options/shiphawk_gateway_url',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-
-        $params = http_build_query(['api_key' => $api_key]);
-        $ch_url = $gateway_url . 'orders/' . $order->getIncrementId() . '/cancelled' . '?' . $params;
 
         $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL, $ch_url);
+        $chUrl = \Shiphawk\ShGatewayBuilder::buildOrderUrl($gatewayUrl, $apiKey, $order);
+        curl_setopt($ch, CURLOPT_URL, $chUrl);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonOrderRequest);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -82,8 +86,8 @@ class ChangeStatus implements ObserverInterface
 
     public function mlog($data, $file_mame = 'custom.log') {
 
-        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/'.$file_mame);
-        $logger = new \Zend\Log\Logger();
+        $writer = new \Zend_Log_Writer_Stream(BP . '/var/log/'.$file_mame);
+        $logger = new \Zend_Log();
         $logger->addWriter($writer);
         $logger->info(var_export($data, true));
     }

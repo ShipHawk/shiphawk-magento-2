@@ -3,6 +3,9 @@ namespace Shiphawk\Order\Model\Cron;
 
 class ProcessOrderForLast14Days
 {
+    protected $scopeConfig;
+    protected $sendOrder;
+
     /**
      * @var \Magento\Sales\Model\ResourceModel\Order\CollectionFactory
      */
@@ -24,8 +27,6 @@ class ProcessOrderForLast14Days
         $this->_orderCollectionFactory = $orderCollectionFactory;
         $this->scopeConfig = $scopeConfig;
         $this->sendOrder = $sendOrder;
-
-
     }
 
     public function execute()
