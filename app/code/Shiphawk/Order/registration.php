@@ -1,6 +1,4 @@
 <?php
-\Magento\Framework\Component\ComponentRegistrar::register(
-    \Magento\Framework\Component\ComponentRegistrar::MODULE,
-    'Shiphawk_Order',
-    __DIR__
-);
+use Magento\Framework\Component\ComponentRegistrar;
+
+ComponentRegistrar::register(ComponentRegistrar::MODULE, 'Shiphawk_Order', __DIR__);
