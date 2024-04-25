@@ -123,7 +123,8 @@ class Carrier extends AbstractCarrier implements CarrierInterface
                 'is_residential' => 'true'
             ),
             'apply_rules'=>'true',
-            'rate_source'=>'magento2'
+            'rate_source'=>'magento2',
+            'source_system'=>'magento2'
         );
 
         $rateResponse = $this->getRates($rateRequest);
