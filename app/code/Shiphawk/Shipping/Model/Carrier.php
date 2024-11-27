@@ -223,56 +223,43 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         return $arr_res;
     }
 
-    public function getItems($request)
-    {
+    public function getItems($request) {
         $items = array();
 
+        // getAllItems() return all request items including clild items for :bundle products.
+        // So we have those check to include only parent items in rate request.
         foreach ($request->getAllItems() as $item) {
-
             if ($item->getProductType() != 'simple') {
-
-                $product = $this->objectManager->create('Magento\Catalog\Model\Product')->load($item->getProductId());
-                if ($product->getId()) {
-                    $item_weight = $item->getWeight();
-                    $new_item = array(
-                        'product_sku' => $item->getSku(),
-                        'quantity' => $item->getQty(),
-                        'value' => $product->getPrice(),
-                        'length' => floatval($product->getResource()->getAttributeRawValue($product->getId(),'shiphawk_length', null)),
-                        'width' => floatval($product->getResource()->getAttributeRawValue($product->getId(),'shiphawk_width', null)),
-                        'height' => floatval($product->getResource()->getAttributeRawValue($product->getId(),'shiphawk_height', null)),
-                        'weight_uom' => 'lbs',
-                        'weight' => $item_weight,
-                        'item_type' => $item_weight <= 70 ? 'parcel' : 'handling_unit'
-                    );
-                    if ($item_weight > 70) {
-                        $new_item['handling_unit_type'] = 'box';
-                    }
-                    $items[] = $new_item;
-                }
-
+                $items[] = $this->buildItem($item);
             } else if ($item->getProductType() != 'configurable' && !$item->getParentItemId()) {
-
-                    $item_weight = $item->getWeight();
-                    $new_item = array(
-                        'product_sku' => $item->getSku(),
-                        'quantity' => $item->getQty(),
-                        'value' => $item->getPrice(),
-                        'length' => floatval($item->getProduct()->getResource()->getAttributeRawValue($item->getProduct()->getId(),'shiphawk_length', null)),
-                        'width' => floatval($item->getProduct()->getResource()->getAttributeRawValue($item->getProduct()->getId(),'shiphawk_width', null)),
-                        'height' => floatval($item->getProduct()->getResource()->getAttributeRawValue($item->getProduct()->getId(),'shiphawk_height', null)),
-                        'weight' => $item_weight,
-                        'weight_uom' => 'lbs',
-                        'item_type' => $item_weight <= 70 ? 'parcel' : 'handling_unit'
-                    );
-                    if ($item_weight > 70) {
-                        $new_item['handling_unit_type'] = 'box';
-                    }
-                    $items[] = $new_item;
+                $items[] = $this->buildItem($item);
             }
         }
 
         return $items;
+    }
+
+    public function buildItem($item) {
+        $product = $item->getProduct();
+        $itemWeight = $item->getWeight();
+
+        $newItem = array(
+            'product_sku' => $item->getSku(),
+            'quantity' => $item->getQty(),
+            'value' => $item->getPrice(),
+            'length' => floatval($product->getResource()->getAttributeRawValue($product->getId(),'shiphawk_length', null)),
+            'width' => floatval($product->getResource()->getAttributeRawValue($product->getId(),'shiphawk_width', null)),
+            'height' => floatval($product->getResource()->getAttributeRawValue($product->getId(),'shiphawk_height', null)),
+            'weight' => $itemWeight,
+            'weight_uom' => 'lbs',
+            'item_type' => $itemWeight <= 70 ? 'parcel' : 'handling_unit',
+            'product_type' => $item->getProductType(),
+        );
+        if ($itemWeight > 70) {
+            $newItem['handling_unit_type'] = 'box';
+        }
+
+        return $newItem;
     }
 
     public function mlog($data, $file_mame = 'custom.log') {
