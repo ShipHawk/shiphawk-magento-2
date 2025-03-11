@@ -252,12 +252,8 @@ class Carrier extends AbstractCarrier implements CarrierInterface
             'height' => floatval($product->getResource()->getAttributeRawValue($product->getId(),'shiphawk_height', null)),
             'weight' => $itemWeight,
             'weight_uom' => 'lbs',
-            'item_type' => $itemWeight <= 70 ? 'parcel' : 'handling_unit',
             'product_type' => $item->getProductType(),
         );
-        if ($itemWeight > 70) {
-            $newItem['handling_unit_type'] = 'box';
-        }
 
         return $newItem;
     }
