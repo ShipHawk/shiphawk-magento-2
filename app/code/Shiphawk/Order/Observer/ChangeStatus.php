@@ -51,10 +51,10 @@ class ChangeStatus implements ObserverInterface
 
         try {
             $response =  $this->_push($jsonOrderRequest, $order);
-            $this->mlog(var_export($response, true), 'response_update.log');
+            $this->logger->info('[shiphawk_response_update] ' . var_export($response, true));
 
-        } catch (Exception $e) {
-            $this->mlog($e->getMessage(), 'error.log');
+        } catch (\Exception $e) {
+            $this->logger->info('[shiphawk_error] ' . $e->getMessage());
         }
 
     }
@@ -82,14 +82,6 @@ class ChangeStatus implements ObserverInterface
 
         curl_close($ch);
         return $arr_res;
-    }
-
-    public function mlog($data, $file_mame = 'custom.log') {
-
-        $writer = new \Zend_Log_Writer_Stream(BP . '/var/log/'.$file_mame);
-        $logger = new \Zend_Log();
-        $logger->addWriter($writer);
-        $logger->info(var_export($data, true));
     }
 
     public function map($status)

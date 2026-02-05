@@ -1,1 +1,1 @@
-# shiphawk-magento-2
+# shiphawk-magento-plugin-2.4.8
