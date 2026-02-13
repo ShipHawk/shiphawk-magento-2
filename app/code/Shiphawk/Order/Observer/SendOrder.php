@@ -4,6 +4,7 @@ namespace Shiphawk\Order\Observer;
 
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\App\RequestInterface;
+use Psr\Log\LoggerInterface;
 
 require_once __DIR__ . '/../../ShGatewayBuilder.php';
 
@@ -15,6 +16,7 @@ class SendOrder implements ObserverInterface
     protected $scopeConfig;
     protected $productRepository;
     protected $regionFactory;
+    protected $logger;
 
     public function __construct(
         \Magento\Framework\App\RequestInterface $request,
@@ -22,7 +24,8 @@ class SendOrder implements ObserverInterface
         \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Catalog\Api\ProductRepositoryInterface $productRepository,
-        \Magento\Directory\Model\RegionFactory $regionFactory
+        \Magento\Directory\Model\RegionFactory $regionFactory,
+        LoggerInterface $logger
     )
     {
         $this->_request = $request;
@@ -31,6 +34,7 @@ class SendOrder implements ObserverInterface
         $this->scopeConfig = $scopeConfig;
         $this->productRepository = $productRepository;
         $this->regionFactory = $regionFactory;
+        $this->logger = $logger;
     }
 
     public function execute(\Magento\Framework\Event\Observer $observer)
@@ -91,10 +95,9 @@ class SendOrder implements ObserverInterface
 
         try {
             $response = $this->_push($orderRequest);
-            $this->mlog($response, 'response.log');
-
-        } catch (Exception $e) {
-            $this->mlog($e->getMessage(), 'error.log');
+            $this->logger->info('[shiphawk_response] ' . var_export($response, true));
+        } catch (\Exception $e) {
+            $this->logger->info('[shiphawk_error] ' . $e->getMessage());
         }
     }
 
@@ -170,13 +173,6 @@ class SendOrder implements ObserverInterface
 
         curl_close($ch);
         return $arr_res;
-    }
-
-    public function mlog($data, $file_mame = 'custom.log') {
-        $writer = new \Zend_Log_Writer_Stream(BP . '/var/log/'.$file_mame);
-        $logger = new \Zend_Log();
-        $logger->addWriter($writer);
-        $logger->info(var_export($data, true));
     }
 
     protected function _prepareAddress($address) {

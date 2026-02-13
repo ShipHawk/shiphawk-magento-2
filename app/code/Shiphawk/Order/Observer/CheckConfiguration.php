@@ -46,12 +46,12 @@ class CheckConfiguration implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $response = $this->_get();
-        $this->mlog($response, 'check_conf_response.log');
+        $this->logger->info('[shiphawk_check_conf_response] ' . var_export($response, true));
         if((!$this->scopeConfig->getValue('general/store_information/name',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE)) || (!$this->scopeConfig->getValue('general/store_information/phone',
                 \Magento\Store\Model\ScopeInterface::SCOPE_STORE))) {
 
-            $this->messageManager->addWarning('Missing information required for printing labels: Please add a store name and phone number under Configuration > General > Store Information');
+            $this->messageManager->addWarning('Missing information required for printing labels: Please add a store name and phone number under Stores > Configuration > ShipHawk > ShipHawk Order Options > Store Information');
         }
 
         if (is_null($response) || property_exists($response, 'error')) {
@@ -88,14 +88,6 @@ class CheckConfiguration implements ObserverInterface
 
         curl_close($ch);
         return $arr_res;
-    }
-
-    public function mlog($data, $file_mame = 'custom.log') {
-
-        $writer = new \Zend_Log_Writer_Stream(BP . '/var/log/'.$file_mame);
-        $logger = new \Zend_Log();
-        $logger->addWriter($writer);
-        $logger->info(var_export($data, true));
     }
 
 }

@@ -191,7 +191,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
             $response = $this->_get($jsonRateRequest);
 
             return $response;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->logger->critical($e);
         }
     }
@@ -215,9 +215,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         $resp = curl_exec($ch);
         $arr_res = json_decode($resp);
 
-        $this->mlog($resp, 'shiphawk_rates_response.log');
-
-        //$this->logger->debug(var_export($arr_res, true));
+        $this->logger->info('[shiphawk_rates_response] ' . var_export($resp, true));
 
         curl_close($ch);
         return $arr_res;
@@ -256,14 +254,6 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         );
 
         return $newItem;
-    }
-
-    public function mlog($data, $file_mame = 'custom.log') {
-
-        $writer = new \Zend_Log_Writer_Stream(BP . '/var/log/'.$file_mame);
-        $logger = new \Zend_Log();
-        $logger->addWriter($writer);
-        $logger->info(var_export($data, true));
     }
 
     public function getFreeShippingMethods() {
