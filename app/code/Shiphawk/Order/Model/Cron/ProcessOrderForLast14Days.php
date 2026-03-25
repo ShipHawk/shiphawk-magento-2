@@ -38,7 +38,7 @@ class ProcessOrderForLast14Days
             return;
         }
 
-        $orders =  $this->_orderCollectionFactory->create()->addAttributeToSelect('*')->addAttributeToFilter(
+        $orders =  $this->_orderCollectionFactory->create()->addFieldToFilter(
             'created_at',
             ['gt' => date("Y-m-d", strtotime('now - 14 days'))]
         );

@@ -8,4 +8,6 @@ Magento 2.4.5 -> *branch* **2.4.5**
 
 Magento 2.4.6 -> *branch* **2.4.6**
 
+Magento 2.4.8 -> *branch* **2.4.8**
+
 Please use branch that corresponds to your magento2 version.
