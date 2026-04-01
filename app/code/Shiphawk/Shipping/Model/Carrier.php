@@ -22,6 +22,9 @@ require_once __DIR__ . '/../../ShGatewayBuilder.php';
 
 class Carrier extends AbstractCarrier implements CarrierInterface
 {
+    const RATE_CACHE_TTL = 120; // 2 minutes
+    const CURL_TIMEOUT = 10; // seconds
+
     /**
      * Carrier's code
      *
@@ -186,9 +189,23 @@ class Carrier extends AbstractCarrier implements CarrierInterface
     public function getRates($rateRequest)
     {
         $jsonRateRequest = json_encode($rateRequest);
+        $cacheKey = 'shiphawk_rates_' . md5($jsonRateRequest);
+
+        $cached = $this->catalogSession->getData($cacheKey);
+        if ($cached && isset($cached['timestamp']) && (time() - $cached['timestamp']) < self::RATE_CACHE_TTL) {
+            $this->logger->info("[shiphawk_rates_response] Cache hit for key: {$cacheKey}");
+            return $cached['response'];
+        }
 
         try {
             $response = $this->_get($jsonRateRequest);
+
+            if ($response && !property_exists($response, 'error')) {
+                $this->catalogSession->setData($cacheKey, [
+                    'response' => $response,
+                    'timestamp' => time()
+                ]);
+            }
 
             return $response;
         } catch (\Exception $e) {
@@ -206,18 +223,28 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonRateRequest);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, self::CURL_TIMEOUT);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
                 'Content-Type: application/json',
                 'Content-Length: ' . strlen($jsonRateRequest)
             )
         );
 
+        $startTime = microtime(true);
         $resp = curl_exec($ch);
-        $arr_res = json_decode($resp);
-
-        $this->logger->info('[shiphawk_rates_response] ' . var_export($resp, true));
-
+        $elapsed = round(microtime(true) - $startTime, 2);
+        $curlError = curl_error($ch);
         curl_close($ch);
+
+        if ($curlError) {
+            $this->logger->error("ShipHawk rate request failed after {$elapsed}s: {$curlError} | URL: {$chUrl}");
+            return null;
+        }
+
+        $arr_res = json_decode($resp);
+        $this->logger->info("[shiphawk_rates_response] Response time: {$elapsed}s | URL: {$chUrl} | Response: {$resp}");
+
         return $arr_res;
     }
 
