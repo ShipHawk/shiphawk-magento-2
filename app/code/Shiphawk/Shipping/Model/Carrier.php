@@ -23,7 +23,7 @@ require_once __DIR__ . '/../../ShGatewayBuilder.php';
 class Carrier extends AbstractCarrier implements CarrierInterface
 {
     const RATE_CACHE_TTL = 120; // 2 minutes
-    const CURL_TIMEOUT = 10; // seconds
+    const CURL_TIMEOUT = 60; // seconds
 
     /**
      * Carrier's code
